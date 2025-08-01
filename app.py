@@ -271,6 +271,65 @@ def serve_audio(session_id, filename):
         logger.error(f"Error serving audio file: {e}")
         return "Error serving file", 500
 
+from flask import send_from_directory, Response
+import mimetypes
+import os
+
+@app.route('/audio/<session_id>/<filename>')
+def serve_audio(session_id, filename):
+    """Serve audio files with proper headers for streaming"""
+    try:
+        if session_id not in session_data:
+            return "File not found", 404
+        
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], f"{session_id}_{filename}")
+        
+        if not os.path.exists(file_path):
+            return "File not found", 404
+        
+        # Get file size for proper streaming
+        file_size = os.path.getsize(file_path)
+        
+        # Set proper MIME type
+        if filename.lower().endswith('.mp3'):
+            mimetype = 'audio/mpeg'
+        elif filename.lower().endswith('.wav'):
+            mimetype = 'audio/wav'
+        elif filename.lower().endswith('.m4a'):
+            mimetype = 'audio/mp4'
+        elif filename.lower().endswith('.flac'):
+            mimetype = 'audio/flac'
+        else:
+            mimetype = 'audio/mpeg'
+        
+        def generate():
+            with open(file_path, 'rb') as audio_file:
+                data = audio_file.read(1024)
+                while data:
+                    yield data
+                    data = audio_file.read(1024)
+        
+        response = Response(
+            generate(),
+            mimetype=mimetype,
+            headers={
+                'Content-Length': str(file_size),
+                'Accept-Ranges': 'bytes',
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0',
+                'Access-Control-Allow-Origin': '*'
+            }
+        )
+        
+        return response
+        
+    except Exception as e:
+        logger.error(f"Error serving audio file: {e}")
+        return "Error serving file", 500
+
 if __name__ == '__main__':
     logger.info("Starting Motor Audio Analysis Flask App...")
     app.run(debug=True, host='0.0.0.0', port=5000)
+
+
