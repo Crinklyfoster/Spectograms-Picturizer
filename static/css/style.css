@@ -616,3 +616,103 @@ body {
     border-left: 4px solid var(--danger-color);
     text-align: center;
 }
+
+/* Enhanced Audio Player Styles - UPDATED */
+.audio-loading {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-secondary);
+    background-color: var(--bg-secondary);
+    border-radius: var(--border-radius);
+    margin: 1rem 0;
+    border: 1px solid var(--border-color);
+}
+
+.audio-player {
+    width: 100%;
+    height: 54px;
+    margin: 1rem 0;
+    border-radius: var(--border-radius);
+    background-color: var(--bg-secondary);
+    outline: none;
+}
+
+.audio-player::-webkit-media-controls-panel {
+    background-color: var(--bg-card);
+    border-radius: var(--border-radius);
+}
+
+.audio-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    margin: 1rem 0;
+    flex-wrap: wrap;
+}
+
+.audio-info-display {
+    background-color: var(--bg-secondary);
+    padding: 1rem;
+    border-radius: var(--border-radius);
+    margin-top: 1rem;
+    border-left: 4px solid var(--info-color);
+}
+
+.audio-info-display p {
+    margin: 0.25rem 0;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.audio-info-display strong {
+    color: var(--text-primary);
+}
+
+.audio-error {
+    background-color: #fee2e2;
+    color: #991b1b;
+    padding: 1.5rem;
+    border-radius: var(--border-radius);
+    border-left: 4px solid var(--danger-color);
+    margin: 1rem 0;
+    line-height: 1.6;
+}
+
+.audio-error ul {
+    margin: 1rem 0;
+    padding-left: 2rem;
+}
+
+.audio-error li {
+    margin: 0.5rem 0;
+}
+
+#play-pause-btn {
+    min-width: 100px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+#play-pause-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+#audio-status {
+    font-weight: 600;
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--border-radius);
+    background-color: var(--bg-card);
+}
+
+/* Dark theme specific audio styles */
+[data-theme="dark"] .audio-error {
+    background-color: #991b1b;
+    color: #fee2e2;
+}
+
+[data-theme="dark"] .audio-loading {
+    background-color: var(--bg-card);
+    border-color: var(--border-color);
+}
