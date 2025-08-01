@@ -29,15 +29,13 @@
     <div class="audio-card">
     <h3>🎵 Audio Playback</h3>
     <audio controls class="audio-player" preload="metadata">
-        <source src="{{ url_for('static', filename='uploads/' + session_id + '_' + data.filename) }}" 
-                type="audio/{% if data.filename.endswith('.mp3') %}mpeg{% elif data.filename.endswith('.wav') %}wav{% elif data.filename.endswith('.m4a') %}mp4{% else %}mpeg{% endif %}">
-        <source src="{{ url_for('static', filename='uploads/' + session_id + '_' + data.filename) }}" 
-                type="audio/mpeg">
-        <p>Your browser does not support the audio element. 
-           <a href="{{ url_for('static', filename='uploads/' + session_id + '_' + data.filename) }}" 
-              download="{{ data.filename }}">Download the audio file</a>
-        </p>
-    </audio>
+        <source src="{{ url_for('serve_audio', session_id=session_id, filename=data.filename) }}" 
+            type="audio/{% if data.filename.lower().endswith('.mp3') %}mpeg{% elif data.filename.lower().endswith('.wav') %}wav{% elif data.filename.lower().endswith('.m4a') %}mp4{% else %}mpeg{% endif %}">
+    <p>Your browser does not support the audio element. 
+       <a href="{{ url_for('serve_audio', session_id=session_id, filename=data.filename) }}" 
+          download="{{ data.filename }}">Download the audio file</a>
+    </p>
+</audio>
     
     <!-- Fallback download link -->
     <div class="audio-controls">
