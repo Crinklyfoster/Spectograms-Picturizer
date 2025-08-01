@@ -310,6 +310,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initSmoothScrolling();
     initKeyboardShortcuts();
     handleImageErrors();
+    initAudioPlayer();
     
     // Theme toggle button
     const themeToggle = document.getElementById('theme-toggle');
