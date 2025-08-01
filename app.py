@@ -3,7 +3,7 @@ Full-Stack Flask Motor Audio Analysis Application
 Combines frontend serving and backend API in single Flask app
 """
 
-from flask import Flask, render_template, request, jsonify, redirect, url_for, session, flash
+from flask import Flask, render_template, request, jsonify, redirect, url_for, session, flash, send_from_directory
 import os
 import tempfile
 import uuid
@@ -11,6 +11,7 @@ from werkzeug.utils import secure_filename
 import json
 import logging
 from datetime import datetime
+import mimetypes
 
 from backend.audio_utils import AudioProcessor
 from backend.spectrograms import SpectrogramGenerator
@@ -233,6 +234,42 @@ def internal_error(e):
     logger.error(f"Internal server error: {str(e)}")
     flash('Internal server error occurred', 'error')
     return redirect(url_for('index'))
+
+@app.route('/audio/<session_id>/<filename>')
+def serve_audio(session_id, filename):
+    """Serve audio files with proper MIME types"""
+    try:
+        # Security check - ensure session exists
+        if session_id not in session_data:
+            return "File not found", 404
+        
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], f"{session_id}_{filename}")
+        
+        if not os.path.exists(file_path):
+            return "File not found", 404
+        
+        # Set proper MIME type
+        mimetype = mimetypes.guess_type(filename)[0]
+        if not mimetype:
+            if filename.lower().endswith('.mp3'):
+                mimetype = 'audio/mpeg'
+            elif filename.lower().endswith('.wav'):
+                mimetype = 'audio/wav'
+            elif filename.lower().endswith('.m4a'):
+                mimetype = 'audio/mp4'
+            else:
+                mimetype = 'audio/mpeg'
+        
+        return send_from_directory(
+            app.config['UPLOAD_FOLDER'], 
+            f"{session_id}_{filename}",
+            mimetype=mimetype,
+            as_attachment=False
+        )
+        
+    except Exception as e:
+        logger.error(f"Error serving audio file: {e}")
+        return "Error serving file", 500
 
 if __name__ == '__main__':
     logger.info("Starting Motor Audio Analysis Flask App...")
