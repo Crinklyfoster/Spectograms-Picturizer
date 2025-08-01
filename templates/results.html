@@ -27,26 +27,53 @@
 
     <!-- Audio Playback -->
     <div class="audio-card">
-    <h3>🎵 Audio Playback</h3>
-    <audio controls class="audio-player" preload="metadata">
-        <source src="{{ url_for('serve_audio', session_id=session_id, filename=data.filename) }}" 
-            type="audio/{% if data.filename.lower().endswith('.mp3') %}mpeg{% elif data.filename.lower().endswith('.wav') %}wav{% elif data.filename.lower().endswith('.m4a') %}mp4{% else %}mpeg{% endif %}">
-    <p>Your browser does not support the audio element. 
-       <a href="{{ url_for('serve_audio', session_id=session_id, filename=data.filename) }}" 
-          download="{{ data.filename }}">Download the audio file</a>
-    </p>
-</audio>
-    
-    <!-- Fallback download link -->
-    <div class="audio-controls">
-        <a href="{{ url_for('serve_audio', session_id=session_id, filename=data.filename) }}" 
-   download="{{ data.filename }}" 
-   class="btn btn-secondary">
-            <span class="btn-icon">⬇️</span>
-            Download Audio
-        </a>
+        <h3>🎵 Audio Playback</h3>
+        
+        <!-- Loading indicator -->
+        <div id="audio-loading" class="audio-loading">
+            <p>🔄 Loading audio...</p>
+        </div>
+        
+        <!-- Audio player -->
+        <audio 
+            id="main-audio-player"
+            controls 
+            preload="metadata" 
+            class="audio-player"
+            style="display: none;">
+            <source src="{{ url_for('serve_audio', session_id=session_id, filename=data.filename) }}" 
+                    type="audio/{% if data.filename.lower().endswith('.mp3') %}mpeg{% elif data.filename.lower().endswith('.wav') %}wav{% elif data.filename.lower().endswith('.m4a') %}mp4{% elif data.filename.lower().endswith('.flac') %}flac{% else %}mpeg{% endif %}">
+            <p>Your browser does not support the audio element.</p>
+        </audio>
+        
+        <!-- Error message placeholder -->
+        <div id="audio-error" class="audio-error" style="display: none;">
+            <p>❌ Unable to play audio file</p>
+            <p>The audio format may not be supported by your browser.</p>
+        </div>
+        
+        <!-- Audio controls and info -->
+        <div class="audio-controls">
+            <button id="play-pause-btn" class="btn btn-primary" style="display: none;">
+                <span class="btn-icon">▶️</span>
+                <span class="btn-text">Play</span>
+            </button>
+            
+            <a href="{{ url_for('serve_audio', session_id=session_id, filename=data.filename) }}" 
+               download="{{ data.filename }}" 
+               class="btn btn-secondary">
+                <span class="btn-icon">⬇️</span>
+                Download Audio
+            </a>
+        </div>
+        
+        <div class="audio-info-display">
+            <p><strong>File:</strong> {{ data.filename }}</p>
+            <p><strong>Duration:</strong> {{ "%.2f"|format(data.duration) }}s</p>
+            <p><strong>Sample Rate:</strong> {{ data.sample_rate }} Hz</p>
+            <p><strong>Status:</strong> <span id="audio-status">Loading...</span></p>
+        </div>
     </div>
-</div>
 
     <!-- Spectrograms -->
     <div class="spectrograms-section">
