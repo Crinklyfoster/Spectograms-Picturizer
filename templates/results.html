@@ -39,9 +39,9 @@
     
     <!-- Fallback download link -->
     <div class="audio-controls">
-        <a href="{{ url_for('static', filename='uploads/' + session_id + '_' + data.filename) }}" 
-           download="{{ data.filename }}" 
-           class="btn btn-secondary">
+        <a href="{{ url_for('serve_audio', session_id=session_id, filename=data.filename) }}" 
+   download="{{ data.filename }}" 
+   class="btn btn-secondary">
             <span class="btn-icon">⬇️</span>
             Download Audio
         </a>
