@@ -3,7 +3,7 @@ Full-Stack Flask Motor Audio Analysis Application
 Combines frontend serving and backend API in single Flask app
 """
 
-from flask import Flask, render_template, request, jsonify, redirect, url_for, session, flash, send_from_directory
+from flask import Flask, render_template, request, jsonify, redirect, url_for, session, flash, send_from_directory, Response
 import os
 import tempfile
 import uuid
@@ -158,87 +158,6 @@ def analyze(session_id):
         flash(f'Analysis failed: {str(e)}', 'error')
         return redirect(url_for('index'))
 
-@app.route('/api/features/<session_id>')
-def get_features(session_id):
-    """API endpoint to get features as JSON"""
-    if session_id not in session_data or 'features' not in session_data[session_id]:
-        return jsonify({'error': 'No features found'}), 404
-    
-    return jsonify(session_data[session_id]['features'])
-
-@app.route('/download/csv/<session_id>')
-def download_csv(session_id):
-    """Download features as CSV"""
-    if session_id not in session_data or 'features' not in session_data[session_id]:
-        flash('No features available for download', 'error')
-        return redirect(url_for('index'))
-    
-    features = session_data[session_id]['features']
-    
-    # Create CSV content
-    csv_content = "feature,value\n"
-    for key, value in features.items():
-        csv_content += f"{key},{value}\n"
-    
-    from flask import Response
-    return Response(
-        csv_content,
-        mimetype="text/csv",
-        headers={"Content-disposition": f"attachment; filename=features_{session_id}.csv"}
-    )
-
-@app.route('/download/json/<session_id>')
-def download_json(session_id):
-    """Download features as JSON"""
-    if session_id not in session_data or 'features' not in session_data[session_id]:
-        flash('No features available for download', 'error')
-        return redirect(url_for('index'))
-    
-    features = session_data[session_id]['features']
-    
-    from flask import Response
-    return Response(
-        json.dumps(features, indent=2),
-        mimetype="application/json",
-        headers={"Content-disposition": f"attachment; filename=features_{session_id}.json"}
-    )
-
-@app.route('/clear')
-def clear_session():
-    """Clear current session and files"""
-    session_id = session.get('session_id')
-    if session_id and session_id in session_data:
-        # Remove uploaded file
-        file_path = session_data[session_id].get('file_path')
-        if file_path and os.path.exists(file_path):
-            os.remove(file_path)
-        
-        # Clear session data
-        del session_data[session_id]
-    
-    session.clear()
-    flash('Session cleared successfully', 'success')
-    return redirect(url_for('index'))
-
-@app.errorhandler(413)
-def file_too_large(e):
-    flash('File too large (max 50MB)', 'error')
-    return redirect(url_for('index'))
-
-@app.errorhandler(404)
-def not_found(e):
-    return render_template('index.html'), 404
-
-@app.errorhandler(500)
-def internal_error(e):
-    logger.error(f"Internal server error: {str(e)}")
-    flash('Internal server error occurred', 'error')
-    return redirect(url_for('index'))
-
-from flask import send_from_directory, Response
-import mimetypes
-import os
-
 @app.route('/audio/<session_id>/<filename>')
 def serve_audio(session_id, filename):
     """Serve audio files with proper headers for streaming"""
@@ -292,8 +211,81 @@ def serve_audio(session_id, filename):
         logger.error(f"Error serving audio file: {e}")
         return "Error serving file", 500
 
+@app.route('/api/features/<session_id>')
+def get_features(session_id):
+    """API endpoint to get features as JSON"""
+    if session_id not in session_data or 'features' not in session_data[session_id]:
+        return jsonify({'error': 'No features found'}), 404
+    
+    return jsonify(session_data[session_id]['features'])
+
+@app.route('/download/csv/<session_id>')
+def download_csv(session_id):
+    """Download features as CSV"""
+    if session_id not in session_data or 'features' not in session_data[session_id]:
+        flash('No features available for download', 'error')
+        return redirect(url_for('index'))
+    
+    features = session_data[session_id]['features']
+    
+    # Create CSV content
+    csv_content = "feature,value\n"
+    for key, value in features.items():
+        csv_content += f"{key},{value}\n"
+    
+    return Response(
+        csv_content,
+        mimetype="text/csv",
+        headers={"Content-disposition": f"attachment; filename=features_{session_id}.csv"}
+    )
+
+@app.route('/download/json/<session_id>')
+def download_json(session_id):
+    """Download features as JSON"""
+    if session_id not in session_data or 'features' not in session_data[session_id]:
+        flash('No features available for download', 'error')
+        return redirect(url_for('index'))
+    
+    features = session_data[session_id]['features']
+    
+    return Response(
+        json.dumps(features, indent=2),
+        mimetype="application/json",
+        headers={"Content-disposition": f"attachment; filename=features_{session_id}.json"}
+    )
+
+@app.route('/clear')
+def clear_session():
+    """Clear current session and files"""
+    session_id = session.get('session_id')
+    if session_id and session_id in session_data:
+        # Remove uploaded file
+        file_path = session_data[session_id].get('file_path')
+        if file_path and os.path.exists(file_path):
+            os.remove(file_path)
+        
+        # Clear session data
+        del session_data[session_id]
+    
+    session.clear()
+    flash('Session cleared successfully', 'success')
+    return redirect(url_for('index'))
+
+@app.errorhandler(413)
+def file_too_large(e):
+    flash('File too large (max 50MB)', 'error')
+    return redirect(url_for('index'))
+
+@app.errorhandler(404)
+def not_found(e):
+    return render_template('index.html'), 404
+
+@app.errorhandler(500)
+def internal_error(e):
+    logger.error(f"Internal server error: {str(e)}")
+    flash('Internal server error occurred', 'error')
+    return redirect(url_for('index'))
+
 if __name__ == '__main__':
     logger.info("Starting Motor Audio Analysis Flask App...")
     app.run(debug=True, host='0.0.0.0', port=5000)
-
-
