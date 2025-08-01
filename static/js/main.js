@@ -238,6 +238,69 @@ function handleImageErrors() {
     });
 }
 
+// Enhanced Audio Player Handling
+function initAudioPlayer() {
+    const audioPlayer = document.querySelector('.audio-player');
+    
+    if (audioPlayer) {
+        // Handle audio loading errors
+        audioPlayer.addEventListener('error', function(e) {
+            console.error('Audio loading error:', e);
+            showAudioError();
+        });
+        
+        // Handle successful audio load
+        audioPlayer.addEventListener('loadedmetadata', function() {
+            console.log('Audio loaded successfully');
+            const duration = this.duration;
+            updateAudioInfo(duration);
+        });
+        
+        // Handle audio load start
+        audioPlayer.addEventListener('loadstart', function() {
+            console.log('Audio loading started');
+        });
+        
+        // Handle audio can play
+        audioPlayer.addEventListener('canplay', function() {
+            console.log('Audio can start playing');
+        });
+    }
+}
+
+function showAudioError() {
+    const audioCard = document.querySelector('.audio-card');
+    if (audioCard) {
+        const errorMessage = document.createElement('div');
+        errorMessage.className = 'audio-error';
+        errorMessage.innerHTML = `
+            <p>❌ Unable to play audio file</p>
+            <p>This might be due to an unsupported format or file corruption.</p>
+            <p>Try downloading the file directly using the button below.</p>
+        `;
+        
+        // Insert error message after the audio player
+        const audioPlayer = audioCard.querySelector('.audio-player');
+        if (audioPlayer) {
+            audioPlayer.parentNode.insertBefore(errorMessage, audioPlayer.nextSibling);
+        }
+    }
+}
+
+function updateAudioInfo(duration) {
+    // Update duration display if needed
+    const durationElements = document.querySelectorAll('.duration-display');
+    durationElements.forEach(element => {
+        element.textContent = formatDuration(duration);
+    });
+}
+
+function formatDuration(seconds) {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = Math.floor(seconds % 60);
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+}
+
 // Initialize Everything
 document.addEventListener('DOMContentLoaded', function() {
     initTheme();
