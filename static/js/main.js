@@ -74,6 +74,193 @@ function initFileUpload() {
     }
 }
 
+// Enhanced Audio Player Handling
+function initAudioPlayer() {
+    const audioPlayer = document.getElementById('main-audio-player');
+    const loadingDiv = document.getElementById('audio-loading');
+    const errorDiv = document.getElementById('audio-error');
+    const playPauseBtn = document.getElementById('play-pause-btn');
+    const statusSpan = document.getElementById('audio-status');
+    
+    if (!audioPlayer) return;
+    
+    let isPlaying = false;
+    
+    // Show loading initially
+    showAudioLoading(true);
+    
+    // Handle audio loading events
+    audioPlayer.addEventListener('loadstart', function() {
+        updateStatus('Loading...');
+        showAudioLoading(true);
+        console.log('Audio load started');
+    });
+    
+    audioPlayer.addEventListener('loadedmetadata', function() {
+        updateStatus('Metadata loaded - Ready to play');
+        showAudioLoading(false);
+        audioPlayer.style.display = 'block';
+        if (playPauseBtn) playPauseBtn.style.display = 'inline-flex';
+        console.log('Audio metadata loaded, duration:', this.duration);
+    });
+    
+    audioPlayer.addEventListener('canplay', function() {
+        updateStatus('Can play');
+        showAudioLoading(false);
+        audioPlayer.style.display = 'block';
+        if (playPauseBtn) playPauseBtn.style.display = 'inline-flex';
+        console.log('Audio can start playing');
+    });
+    
+    audioPlayer.addEventListener('canplaythrough', function() {
+        updateStatus('Ready to play through');
+        console.log('Audio can play through without buffering');
+    });
+    
+    // Handle audio errors with detailed logging
+    audioPlayer.addEventListener('error', function(e) {
+        console.error('Audio error event:', e);
+        console.error('Audio error details:', this.error);
+        
+        let errorMessage = 'Unknown error';
+        if (this.error) {
+            switch (this.error.code) {
+                case MediaError.MEDIA_ERR_ABORTED:
+                    errorMessage = 'Audio loading was aborted';
+                    break;
+                case MediaError.MEDIA_ERR_NETWORK:
+                    errorMessage = 'Network error while loading audio';
+                    break;
+                case MediaError.MEDIA_ERR_DECODE:
+                    errorMessage = 'Audio decoding error';
+                    break;
+                case MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED:
+                    errorMessage = 'Audio format not supported';
+                    break;
+            }
+        }
+        
+        showAudioError(errorMessage);
+        updateStatus('Error: ' + errorMessage);
+    });
+    
+    // Handle audio state changes
+    audioPlayer.addEventListener('play', function() {
+        isPlaying = true;
+        updatePlayButton(true);
+        updateStatus('Playing');
+        console.log('Audio started playing');
+    });
+    
+    audioPlayer.addEventListener('pause', function() {
+        isPlaying = false;
+        updatePlayButton(false);
+        updateStatus('Paused');
+        console.log('Audio paused');
+    });
+    
+    audioPlayer.addEventListener('ended', function() {
+        isPlaying = false;
+        updatePlayButton(false);
+        updateStatus('Ended');
+        console.log('Audio playback ended');
+    });
+    
+    // Custom play/pause button functionality
+    if (playPauseBtn) {
+        playPauseBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            if (audioPlayer.paused) {
+                const playPromise = audioPlayer.play();
+                if (playPromise !== undefined) {
+                    playPromise.then(() => {
+                        console.log('Audio started playing successfully');
+                    }).catch((error) => {
+                        console.error('Play failed:', error);
+                        showAudioError('Playback failed: ' + error.message);
+                    });
+                }
+            } else {
+                audioPlayer.pause();
+            }
+        });
+    }
+    
+    // Force load the audio with retry mechanism
+    let retryCount = 0;
+    const maxRetries = 3;
+    
+    function loadAudio() {
+        try {
+            audioPlayer.load();
+            console.log('Audio load initiated, attempt:', retryCount + 1);
+        } catch (error) {
+            console.error('Audio load failed:', error);
+            if (retryCount < maxRetries) {
+                retryCount++;
+                setTimeout(loadAudio, 1000 * retryCount);
+            } else {
+                showAudioError('Failed to load audio after multiple attempts');
+            }
+        }
+    }
+    
+    loadAudio();
+    
+    function showAudioLoading(show) {
+        if (loadingDiv) {
+            loadingDiv.style.display = show ? 'block' : 'none';
+        }
+    }
+    
+    function showAudioError(message = 'Unable to load or play audio file') {
+        showAudioLoading(false);
+        if (errorDiv) {
+            errorDiv.innerHTML = `
+                <p>❌ ${message}</p>
+                <p>This might be due to:</p>
+                <ul>
+                    <li>Unsupported audio format</li>
+                    <li>File corruption</li>
+                    <li>Network connectivity issues</li>
+                    <li>Browser security restrictions</li>
+                </ul>
+                <p>Try downloading the file directly using the button above.</p>
+            `;
+            errorDiv.style.display = 'block';
+        }
+        if (audioPlayer) {
+            audioPlayer.style.display = 'none';
+        }
+        if (playPauseBtn) {
+            playPauseBtn.style.display = 'none';
+        }
+    }
+    
+    function updateStatus(status) {
+        if (statusSpan) {
+            statusSpan.textContent = status;
+            statusSpan.style.color = status.includes('Error') ? '#dc2626' : '';
+        }
+    }
+    
+    function updatePlayButton(playing) {
+        if (playPauseBtn) {
+            const icon = playPauseBtn.querySelector('.btn-icon');
+            const text = playPauseBtn.querySelector('.btn-text');
+            
+            if (playing) {
+                if (icon) icon.textContent = '⏸️';
+                if (text) text.textContent = 'Pause';
+            } else {
+                if (icon) icon.textContent = '▶️';
+                if (text) text.textContent = 'Play';
+            }
+        }
+    }
+}
+
 // Tab Management
 function showTab(tabId) {
     // Hide all tab panes
@@ -219,6 +406,15 @@ function initKeyboardShortcuts() {
             const alerts = document.querySelectorAll('.alert');
             alerts.forEach(alert => alert.remove());
         }
+        
+        // Spacebar: Play/pause audio
+        if (e.code === 'Space' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+            e.preventDefault();
+            const playPauseBtn = document.getElementById('play-pause-btn');
+            if (playPauseBtn && playPauseBtn.style.display !== 'none') {
+                playPauseBtn.click();
+            }
+        }
     });
 }
 
@@ -238,67 +434,14 @@ function handleImageErrors() {
     });
 }
 
-// Enhanced Audio Player Handling
-function initAudioPlayer() {
-    const audioPlayer = document.querySelector('.audio-player');
-    
-    if (audioPlayer) {
-        // Handle audio loading errors
-        audioPlayer.addEventListener('error', function(e) {
-            console.error('Audio loading error:', e);
-            showAudioError();
-        });
-        
-        // Handle successful audio load
-        audioPlayer.addEventListener('loadedmetadata', function() {
-            console.log('Audio loaded successfully');
-            const duration = this.duration;
-            updateAudioInfo(duration);
-        });
-        
-        // Handle audio load start
-        audioPlayer.addEventListener('loadstart', function() {
-            console.log('Audio loading started');
-        });
-        
-        // Handle audio can play
-        audioPlayer.addEventListener('canplay', function() {
-            console.log('Audio can start playing');
-        });
-    }
-}
-
-function showAudioError() {
-    const audioCard = document.querySelector('.audio-card');
-    if (audioCard) {
-        const errorMessage = document.createElement('div');
-        errorMessage.className = 'audio-error';
-        errorMessage.innerHTML = `
-            <p>❌ Unable to play audio file</p>
-            <p>This might be due to an unsupported format or file corruption.</p>
-            <p>Try downloading the file directly using the button below.</p>
-        `;
-        
-        // Insert error message after the audio player
-        const audioPlayer = audioCard.querySelector('.audio-player');
-        if (audioPlayer) {
-            audioPlayer.parentNode.insertBefore(errorMessage, audioPlayer.nextSibling);
+// Force audio interaction after user gesture
+function enableAudioInteraction() {
+    document.addEventListener('click', function() {
+        const audioPlayer = document.getElementById('main-audio-player');
+        if (audioPlayer && audioPlayer.muted) {
+            audioPlayer.muted = false;
         }
-    }
-}
-
-function updateAudioInfo(duration) {
-    // Update duration display if needed
-    const durationElements = document.querySelectorAll('.duration-display');
-    durationElements.forEach(element => {
-        element.textContent = formatDuration(duration);
-    });
-}
-
-function formatDuration(seconds) {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = Math.floor(seconds % 60);
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+    }, { once: true });
 }
 
 // Initialize Everything
@@ -310,7 +453,8 @@ document.addEventListener('DOMContentLoaded', function() {
     initSmoothScrolling();
     initKeyboardShortcuts();
     handleImageErrors();
-    initAudioPlayer();
+    initAudioPlayer(); // Enhanced audio player
+    enableAudioInteraction();
     
     // Theme toggle button
     const themeToggle = document.getElementById('theme-toggle');
