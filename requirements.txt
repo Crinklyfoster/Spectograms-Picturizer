@@ -2,22 +2,23 @@
 Flask==2.3.3
 Werkzeug==2.3.7
 
-# Audio processing libraries
-librosa==0.10.1
-scipy==1.10.1
-soundfile==0.12.1
-numba==0.58.1
+# Audio processing (SciPy-free alternatives)
+librosa==0.10.1         # Still uses some SciPy, but we'll work around it
+soundfile==0.12.1       # Better audio I/O than scipy.io.wavfile
+numba==0.57.1           # For performance optimization
 
-# Data processing
+# Data processing and math
 numpy==1.24.4
-pandas==2.1.4
+pandas==2.0.3
+
+# Statistics alternative to scipy.stats
+statistics              # Built-in Python module
+scikit-learn==1.3.0     # Has some statistical functions
 
 # Image and visualization
-matplotlib==3.8.2
-Pillow==10.1.0
+matplotlib==3.7.2
+Pillow==10.0.1
 
-# Signal processing
-PyWavelets==1.4.1
-
-# Utilities
-uuid
+# Signal processing alternatives
+PyWavelets==1.4.1       # Keep for wavelets
+pydub==0.25.1           # Audio manipulation alternative
