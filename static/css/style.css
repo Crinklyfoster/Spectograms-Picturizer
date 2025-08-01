@@ -568,3 +568,51 @@ body {
 * {
     transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
+
+/* Enhanced Audio Player Styles */
+.audio-player {
+    width: 100%;
+    height: 54px;
+    margin: 1rem 0;
+    border-radius: var(--border-radius);
+    background-color: var(--bg-secondary);
+}
+
+.audio-player::-webkit-media-controls-panel {
+    background-color: var(--bg-card);
+    border-radius: var(--border-radius);
+}
+
+.audio-controls {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.audio-info-display {
+    background-color: var(--bg-secondary);
+    padding: 1rem;
+    border-radius: var(--border-radius);
+    margin-top: 1rem;
+    border-left: 4px solid var(--info-color);
+}
+
+.audio-info-display p {
+    margin: 0.25rem 0;
+    color: var(--text-secondary);
+}
+
+.audio-info-display strong {
+    color: var(--text-primary);
+}
+
+/* Error message styling */
+.audio-error {
+    background-color: #fee2e2;
+    color: #991b1b;
+    padding: 1rem;
+    border-radius: var(--border-radius);
+    border-left: 4px solid var(--danger-color);
+    text-align: center;
+}
