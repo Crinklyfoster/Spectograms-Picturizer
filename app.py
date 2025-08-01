@@ -235,42 +235,6 @@ def internal_error(e):
     flash('Internal server error occurred', 'error')
     return redirect(url_for('index'))
 
-@app.route('/audio/<session_id>/<filename>')
-def serve_audio(session_id, filename):
-    """Serve audio files with proper MIME types"""
-    try:
-        # Security check - ensure session exists
-        if session_id not in session_data:
-            return "File not found", 404
-        
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'], f"{session_id}_{filename}")
-        
-        if not os.path.exists(file_path):
-            return "File not found", 404
-        
-        # Set proper MIME type
-        mimetype = mimetypes.guess_type(filename)[0]
-        if not mimetype:
-            if filename.lower().endswith('.mp3'):
-                mimetype = 'audio/mpeg'
-            elif filename.lower().endswith('.wav'):
-                mimetype = 'audio/wav'
-            elif filename.lower().endswith('.m4a'):
-                mimetype = 'audio/mp4'
-            else:
-                mimetype = 'audio/mpeg'
-        
-        return send_from_directory(
-            app.config['UPLOAD_FOLDER'], 
-            f"{session_id}_{filename}",
-            mimetype=mimetype,
-            as_attachment=False
-        )
-        
-    except Exception as e:
-        logger.error(f"Error serving audio file: {e}")
-        return "Error serving file", 500
-
 from flask import send_from_directory, Response
 import mimetypes
 import os
