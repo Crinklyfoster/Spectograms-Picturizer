@@ -27,12 +27,28 @@
 
     <!-- Audio Playback -->
     <div class="audio-card">
-        <h3>🎵 Audio Playback</h3>
-        <audio controls class="audio-player">
-            <source src="{{ url_for('static', filename='uploads/' + session_id + '_' + data.filename) }}" type="audio/mpeg">
-            Your browser does not support the audio element.
-        </audio>
+    <h3>🎵 Audio Playback</h3>
+    <audio controls class="audio-player" preload="metadata">
+        <source src="{{ url_for('static', filename='uploads/' + session_id + '_' + data.filename) }}" 
+                type="audio/{% if data.filename.endswith('.mp3') %}mpeg{% elif data.filename.endswith('.wav') %}wav{% elif data.filename.endswith('.m4a') %}mp4{% else %}mpeg{% endif %}">
+        <source src="{{ url_for('static', filename='uploads/' + session_id + '_' + data.filename) }}" 
+                type="audio/mpeg">
+        <p>Your browser does not support the audio element. 
+           <a href="{{ url_for('static', filename='uploads/' + session_id + '_' + data.filename) }}" 
+              download="{{ data.filename }}">Download the audio file</a>
+        </p>
+    </audio>
+    
+    <!-- Fallback download link -->
+    <div class="audio-controls">
+        <a href="{{ url_for('static', filename='uploads/' + session_id + '_' + data.filename) }}" 
+           download="{{ data.filename }}" 
+           class="btn btn-secondary">
+            <span class="btn-icon">⬇️</span>
+            Download Audio
+        </a>
     </div>
+</div>
 
     <!-- Spectrograms -->
     <div class="spectrograms-section">
