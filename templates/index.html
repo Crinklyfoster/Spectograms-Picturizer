@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="upload-section">
+    <div class="upload-card">
+        <h2 class="section-title">🎵 Upload Audio File</h2>
+        <p class="section-description">
+            Upload your motor audio file for comprehensive spectral analysis. 
+            Supports WAV, MP3, FLAC, and M4A formats (≤20 seconds, max 50MB).
+        </p>
+        
+        <form action="{{ url_for('upload_file') }}" method="POST" enctype="multipart/form-data" class="upload-form">
+            <div class="file-input-wrapper">
+                <input type="file" 
+                       id="audio_file" 
+                       name="audio_file" 
+                       accept=".wav,.mp3,.flac,.m4a"
+                       class="file-input"
+                       required>
+                <label for="audio_file" class="file-label">
+                    <span class="file-icon">📁</span>
+                    <span class="file-text">Choose Audio File</span>
+                </label>
+            </div>
+            
+            <div class="file-info" id="file-info" style="display: none;">
+                <div class="file-details">
+                    <span class="file-name" id="file-name"></span>
+                    <span class="file-size" id="file-size"></span>
+                </div>
+            </div>
+            
+            <button type="submit" class="btn btn-primary" id="upload-btn" disabled>
+                <span class="btn-icon">🚀</span>
+                Analyze Audio
+            </button>
+        </form>
+    </div>
+    
+    <div class="info-section">
+        <h3>🔍 Analysis Features</h3>
+        <div class="feature-grid">
+            <div class="feature-card">
+                <h4>📊 Six Spectrogram Types</h4>
+                <ul>
+                    <li><strong>Mel-Spectrogram:</strong> Energy imbalance detection</li>
+                    <li><strong>Constant-Q Transform:</strong> Harmonic analysis</li>
+                    <li><strong>Log-STFT:</strong> Low-frequency rumble detection</li>
+                    <li><strong>Wavelet Scalogram:</strong> Transient spike analysis</li>
+                    <li><strong>Spectral Kurtosis:</strong> Impulse detection</li>
+                    <li><strong>Modulation Spectrogram:</strong> Winding fault analysis</li>
+                </ul>
+            </div>
+            
+            <div class="feature-card">
+                <h4>📈 Feature Extraction</h4>
+                <ul>
+                    <li><strong>Time Domain:</strong> RMS, Zero-crossing, Crest factor</li>
+                    <li><strong>Frequency Domain:</strong> Centroid, Bandwidth, Rolloff</li>
+                    <li><strong>Spectral Features:</strong> MFCCs, Chroma, Contrast</li>
+                    <li><strong>Rhythm Analysis:</strong> Tempo, Beat patterns</li>
+                </ul>
+            </div>
+            
+            <div class="feature-card">
+                <h4>💾 Export Options</h4>
+                <ul>
+                    <li>Download features as CSV</li>
+                    <li>Export data as JSON</li>
+                    <li>High-resolution spectrogram images</li>
+                    <li>Comprehensive analysis report</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
