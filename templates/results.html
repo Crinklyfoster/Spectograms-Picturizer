@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block title %}Analysis Results - Motor Fault Detection{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h1 class="card-title">Analysis Results</h1>
+    </div>
+    <div class="card-body">
+        <p><strong>File:</strong> {{ filename }}</p>
+        <p>Analysis complete! Below are the generated spectrograms and extracted features. Use the download buttons to export the feature data for further analysis.</p>
+        
+        <div style="margin-top: 20px;">
+            <a href="{{ url_for('index') }}" class="btn btn-secondary">📁 Upload New File</a>
+            <form action="{{ url_for('clear_results') }}" method="post" style="display: inline;">
+                <button type="submit" id="clear-btn" class="btn btn-danger">🗑️ Clear Results</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="results-grid">
+    <!-- Spectrograms Section -->
+    <div>
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Generated Spectrograms</h2>
+            </div>
+            <div class="card-body">
+                <p>Six different spectrogram types have been generated to analyze various aspects of motor faults:</p>
+                
+                <div class="spectrograms-section">
+                    {% for spec_type, spec_info in spectrograms.items() %}
+                    <div class="spectrogram-item">
+                        <h3>{{ spec_info.name }}</h3>
+                        <img src="{{ spec_info.path }}" alt="{{ spec_info.name }}" loading="lazy">
+                        <div class="spectrogram-description">
+                            <strong>Purpose:</strong> {{ spec_info.description }}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Features Panel -->
+    <div>
+        <div class="features-panel">
+            <div class="features-header">
+                <h2 style="margin: 0; color: var(--primary-color);">Extracted Features</h2>
+                <p style="margin: 10px 0 0 0; font-size: 0.9rem; color: var(--secondary-color);">
+                    {{ features|length }} features extracted • Click values to copy
+                </p>
+            </div>
+            
+            <div class="features-content">
+                <div class="features-grid">
+                    {% for feature_name, feature_value in features.items() %}
+                    <div class="feature-item">
+                        <span class="feature-name">{{ feature_name.replace('_', ' ') }}</span>
+                        <span class="feature-value">{{ feature_value }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <div class="download-section">
+                <h3 style="margin-bottom: 15px;">Download Results</h3>
+                <div class="download-buttons">
+                    <a href="{{ url_for('download_features', format='csv') }}" class="btn btn-success download-btn" data-format="csv">
+                        📊 Download CSV
+                    </a>
+                    <a href="{{ url_for('download_features', format='json') }}" class="btn btn-primary download-btn" data-format="json">
+                        📄 Download JSON
+                    </a>
+                </div>
+                <p style="margin-top: 10px; font-size: 0.8rem; color: var(--secondary-color);">
+                    Export all extracted features for further analysis in your preferred format.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Analysis Summary -->
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">Analysis Summary</h2>
+    </div>
+    <div class="card-body">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+            <div>
+                <h3 style="color: var(--primary-color); margin-bottom: 10px;">Time-Domain Features</h3>
+                <p>Statistical properties of the signal including RMS, energy, zero-crossing rate, and statistical moments (mean, std, skewness, kurtosis).</p>
+            </div>
+            
+            <div>
+                <h3 style="color: var(--primary-color); margin-bottom: 10px;">Frequency-Domain Features</h3>
+                <p>Spectral characteristics including centroid, bandwidth, roll-off, contrast, flatness, MFCCs, chroma, and tonnetz features.</p>
+            </div>
+            
+            <div>
+                <h3 style="color: var(--primary-color); margin-bottom: 10px;">Fault-Specific Features</h3>
+                <p>Specialized features for motor fault detection including harmonic-to-noise ratio, spectral irregularity, and frequency band energy ratios.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Interpretation Guide -->
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">Interpretation Guide</h2>
+    </div>
+    <div class="card-body">
+        <h3 style="color: var(--primary-color); margin-bottom: 15px;">Key Indicators to Look For:</h3>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+            <div style="padding: 15px; background-color: var(--light-color); border-radius: 8px;">
+                <h4 style="color: var(--danger-color); margin-bottom: 10px;">🔴 Bearing Faults</h4>
+                <ul style="margin: 0; padding-left: 20px;">
+                    <li>High energy in low frequency bands</li>
+                    <li>Irregular spectral patterns</li>
+                    <li>Increased spectral kurtosis values</li>
+                    <li>Transient spikes in wavelet scalogram</li>
+                </ul>
+            </div>
+            
+            <div style="padding: 15px; background-color: var(--light-color); border-radius: 8px;">
+                <h4 style="color: var(--warning-color); margin-bottom: 10px;">🟡 Imbalance Issues</h4>
+                <ul style="margin: 0; padding-left: 20px;">
+                    <li>Energy concentration at specific frequencies</li>
+                    <li>Regular harmonic patterns</li>
+                    <li>Low-frequency rumble in Log-STFT</li>
+                    <li>Modulation patterns in envelope analysis</li>
+                </ul>
+            </div>
+            
+            <div style="padding: 15px; background-color: var(--light-color); border-radius: 8px;">
+                <h4 style="color: var(--info-color); margin-bottom: 10px;">🔵 Winding Faults</h4>
+                <ul style="margin: 0; padding-left: 20px;">
+                    <li>Sideband patterns in modulation spectrogram</li>
+                    <li>Shifted harmonic content in CQT</li>
+                    <li>Changes in spectral centroid</li>
+                    <li>Altered harmonic-to-noise ratio</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div style="margin-top: 20px; padding: 15px; background-color: var(--info-color); color: white; border-radius: 8px;">
+            <h4 style="margin-bottom: 10px;">💡 Professional Tip</h4>
+            <p style="margin: 0;">Compare results with baseline measurements from healthy motors of the same type. Look for deviations in multiple feature categories rather than relying on single indicators.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
