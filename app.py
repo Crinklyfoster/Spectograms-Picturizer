@@ -3,7 +3,7 @@ Motor Fault Detection Flask Application
 Main application file with routes for upload, analysis, and clearing results.
 """
 
-from flask import Flask, render_template, request, redirect, url_for, session, send_file, jsonify
+from flask import Flask, render_template, request, redirect, url_for, session, send_file, send_from_directory
 import os
 import uuid
 from werkzeug.utils import secure_filename
@@ -82,6 +82,15 @@ def results():
         # Generate spectrograms
         spectrogram_paths = generate_all_spectrograms(audio_path, session_id)
         
+        # Convert file paths to web URLs for each spectrogram
+        for spec_type in spectrogram_paths:
+            if 'path' in spectrogram_paths[spec_type]:
+                # Convert file path to web URL
+                filename_only = os.path.basename(spectrogram_paths[spec_type]['path'])
+                spectrogram_paths[spec_type]['path'] = url_for('serve_result_file', 
+                                                              session_id=session_id, 
+                                                              filename=filename_only)
+        
         # Extract features
         features_df = extract_all_features(audio_path)
         
@@ -103,7 +112,29 @@ def results():
     
     except Exception as e:
         app.logger.error(f"Analysis error: {str(e)}")
-        return render_template('index.html', error="Error analyzing file. Please try again.")
+        return render_template('index.html', error=f"Error analyzing file: {str(e)}")
+
+@app.route('/results/<session_id>/<filename>')
+def serve_result_file(session_id, filename):
+    """Serve generated result files (spectrograms)."""
+    try:
+        # Security check: ensure session_id matches current session
+        if 'session_id' not in session or session['session_id'] != session_id:
+            return "Unauthorized", 403
+        
+        results_dir = os.path.join(os.getcwd(), 'results', session_id)
+        
+        # Check if file exists
+        file_path = os.path.join(results_dir, filename)
+        if not os.path.exists(file_path):
+            app.logger.error(f"File not found: {file_path}")
+            return "File not found", 404
+        
+        return send_from_directory(results_dir, filename)
+    
+    except Exception as e:
+        app.logger.error(f"Error serving file {filename}: {str(e)}")
+        return "Error serving file", 500
 
 @app.route('/download/<format>')
 def download_features(format):
@@ -154,7 +185,19 @@ def not_found(error):
 
 @app.errorhandler(500)
 def internal_error(error):
+    app.logger.error(f"Internal server error: {str(error)}")
     return render_template('index.html', error="Internal server error."), 500
+
+# Add a health check route for debugging
+@app.route('/health')
+def health_check():
+    """Health check endpoint."""
+    return {
+        'status': 'healthy',
+        'upload_folder_exists': os.path.exists(UPLOAD_FOLDER),
+        'results_folder_exists': os.path.exists(RESULTS_FOLDER),
+        'session_active': 'session_id' in session
+    }
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
