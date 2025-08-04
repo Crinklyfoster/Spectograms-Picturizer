@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Audio - Motor Fault Detection{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h1 class="card-title">Motor Fault Detection System</h1>
+    </div>
+    <div class="card-body">
+        <p>Upload an audio file from a motor to analyze potential faults using advanced spectrogram analysis. 
+           Our system generates six different types of spectrograms and extracts comprehensive features to help identify:</p>
+        
+        <ul style="margin: 20px 0; padding-left: 20px;">
+            <li><strong>Warmcut faults:</strong> Detected through CQT, Log-STFT, and Modulation spectrograms</li>
+            <li><strong>Abnormal conditions:</strong> Identified using Wavelet Scalogram, Spectral Kurtosis, and Modulation analysis</li>
+            <li><strong>Vibration issues:</strong> Found via CQT, Log-STFT, Wavelet, and Spectral Kurtosis</li>
+            <li><strong>General degradation:</strong> Observed in Mel-Spectrograms</li>
+        </ul>
+    </div>
+</div>
+
+{% if error %}
+<div class="alert alert-danger">
+    {{ error }}
+</div>
+{% endif %}
+
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">Upload Audio File</h2>
+    </div>
+    <div class="card-body">
+        <form id="upload-form" action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data" class="upload-form">
+            <div class="file-input-wrapper">
+                <input type="file" id="file-input" name="file" accept=".wav,.mp3,.flac,.m4a,.ogg" class="file-input" required>
+                <label for="file-input" class="file-input-label">
+                    📁 Choose Audio File
+                </label>
+            </div>
+            
+            <div id="file-info" class="file-info" style="display: none;"></div>
+            
+            <p style="margin-top: 15px; color: var(--secondary-color); font-size: 0.9rem;">
+                Supported formats: WAV, MP3, FLAC, M4A, OGG<br>
+                Maximum file size: 100MB
+            </p>
+            
+            <noscript>
+                <button type="submit" class="btn btn-primary" style="margin-top: 15px;">
+                    Upload and Analyze
+                </button>
+            </noscript>
+        </form>
+        
+        {% if session.get('filename') %}
+        <div style="margin-top: 30px; text-align: center;">
+            <form action="{{ url_for('clear_results') }}" method="post" style="display: inline;">
+                <button type="submit" id="clear-btn" class="btn btn-danger">
+                    🗑️ Clear Results
+                </button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Instructions Card -->
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">How It Works</h2>
+    </div>
+    <div class="card-body">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+            <div>
+                <h3 style="color: var(--primary-color); margin-bottom: 10px;">1. Upload</h3>
+                <p>Select an audio file recorded from your motor. The system supports common audio formats and can process files up to 100MB.</p>
+            </div>
+            
+            <div>
+                <h3 style="color: var(--primary-color); margin-bottom: 10px;">2. Analysis</h3>
+                <p>Our system generates six specialized spectrograms and extracts over 50 features including time-domain, frequency-domain, and fault-specific characteristics.</p>
+            </div>
+            
+            <div>
+                <h3 style="color: var(--primary-color); margin-bottom: 10px;">3. Results</h3>
+                <p>View detailed spectrograms, extracted features, and download comprehensive analysis data in CSV or JSON format for further investigation.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Spectrogram Information -->
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">Spectrogram Types & Applications</h2>
+    </div>
+    <div class="card-body">
+        <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+            <thead>
+                <tr style="background-color: var(--light-color);">
+                    <th style="padding: 12px; text-align: left; border: 1px solid var(--border-color);">Spectrogram Type</th>
+                    <th style="padding: 12px; text-align: left; border: 1px solid var(--border-color);">Detectable Faults</th>
+                    <th style="padding: 12px; text-align: left; border: 1px solid var(--border-color);">What to Look For</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="padding: 12px; border: 1px solid var(--border-color);"><strong>Mel-Spectrogram</strong></td>
+                    <td style="padding: 12px; border: 1px solid var(--border-color);">All classes (general inspection)</td>
+                    <td style="padding: 12px; border: 1px solid var(--border-color);">Energy imbalance, tonal shifts, soft degradation patterns</td>
+                </tr>
+                <tr>
+                    <td style="padding: 12px; border: 1px solid var(--border-color);"><strong>Constant-Q (CQT)</strong></td>
+                    <td style="padding: 12px; border: 1px solid var(--border-color);">Warmcut, Abnormal, Vibrations</td>
+                    <td style="padding: 12px; border: 1px solid var(--border-color);">Harmonic noise, shifted frequency content in warmcut</td>
+                </tr>
+                <tr>
+                    <td style="padding: 12px; border: 1px solid var(--border-color);"><strong>Log-STFT</strong></td>
+                    <td style="padding: 12px; border: 1px solid var(--border-color);">Vibrations, Warmcut</td>
+                    <td style="padding: 12px; border: 1px solid var(--border-color);">Low-frequency rumble (imbalance or looseness)</td>
+                </tr>
+                <tr>
+                    <td style="padding: 12px; border: 1px solid var(--border-color);"><strong>Wavelet Scalogram</strong></td>
+                    <td style="padding: 12px; border: 1px solid var(--border-color);">Abnormal, Vibrations, Warmcut</td>
+                    <td style="padding: 12px; border: 1px solid var(--border-color);">Short bursts, transient "spikes" from loose/jerky components</td>
+                </tr>
+                <tr>
+                    <td style="padding: 12px; border: 1px solid var(--border-color);"><strong>Spectral Kurtosis</strong></td>
+                    <td style="padding: 12px; border: 1px solid var(--border-color);">Abnormal, Vibrations</td>
+                    <td style="padding: 12px; border: 1px solid var(--border-color);">Impulses and sudden power shifts in affected motors</td>
+                </tr>
+                <tr>
+                    <td style="padding: 12px; border: 1px solid var(--border-color);"><strong>Modulation Spectrogram</strong></td>
+                    <td style="padding: 12px; border: 1px solid var(--border-color);">Warmcut, Abnormal</td>
+                    <td style="padding: 12px; border: 1px solid var(--border-color);">Wobble or sideband-type modulation (winding faults)</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
