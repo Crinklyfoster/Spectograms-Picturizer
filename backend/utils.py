@@ -9,21 +9,23 @@ from werkzeug.utils import secure_filename
 
 def save_uploaded_file(file, session_id):
     """
-    Save uploaded file with a unique name.
+    Save uploaded file with a unique name but return both original and saved names.
     
     Args:
         file: Flask file object
         session_id: Unique session identifier
     
     Returns:
-        str: Filename of saved file
+        dict: Contains original_name, saved_name, and file_path
     """
     # Create session directory
     session_dir = os.path.join('uploads', session_id)
     os.makedirs(session_dir, exist_ok=True)
     
-    # Generate unique filename
+    # Get original filename
     original_filename = secure_filename(file.filename)
+    
+    # Generate unique filename for storage (keep UUID for uniqueness)
     file_extension = original_filename.rsplit('.', 1)[1].lower() if '.' in original_filename else ''
     unique_filename = f"{uuid.uuid4().hex}.{file_extension}"
     
@@ -31,20 +33,24 @@ def save_uploaded_file(file, session_id):
     file_path = os.path.join(session_dir, unique_filename)
     file.save(file_path)
     
-    return unique_filename
+    return {
+        'original_name': original_filename,
+        'saved_name': unique_filename,
+        'file_path': file_path
+    }
 
-def get_upload_path(filename, session_id):
+def get_upload_path(saved_filename, session_id):
     """
-    Get the full path to an uploaded file.
+    Get the full path to an uploaded file using saved filename.
     
     Args:
-        filename: Name of the file
+        saved_filename: Name of the saved file (UUID-based)
         session_id: Session identifier
     
     Returns:
         str: Full path to the file
     """
-    return os.path.join('uploads', session_id, filename)
+    return os.path.join('uploads', session_id, saved_filename)
 
 def clear_session_files(session_id):
     """
