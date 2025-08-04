@@ -52,9 +52,12 @@ def upload_file():
             session_id = str(uuid.uuid4())
             session['session_id'] = session_id
             
-            # Save uploaded file
-            filename = save_uploaded_file(file, session_id)
-            session['filename'] = filename
+            # Save uploaded file - now returns dict with original and saved names
+            file_info = save_uploaded_file(file, session_id)
+            
+            # Store both original and saved filenames
+            session['original_filename'] = file_info['original_name']
+            session['saved_filename'] = file_info['saved_name']
             
             return redirect(url_for('results'))
         except Exception as e:
@@ -66,15 +69,16 @@ def upload_file():
 @app.route('/results')
 def results():
     """Generate and display analysis results."""
-    if 'session_id' not in session or 'filename' not in session:
+    if 'session_id' not in session or 'saved_filename' not in session:
         return redirect(url_for('index'))
     
     session_id = session['session_id']
-    filename = session['filename']
+    saved_filename = session['saved_filename']
+    original_filename = session.get('original_filename', saved_filename)
     
     try:
-        # Get file path
-        audio_path = get_upload_path(filename, session_id)
+        # Get file path using saved filename
+        audio_path = get_upload_path(saved_filename, session_id)
         
         if not os.path.exists(audio_path):
             return redirect(url_for('index'))
@@ -95,7 +99,10 @@ def results():
         features_df = extract_all_features(audio_path)
         
         # Store features in session for download
-        session['features'] = features_df.to_dict('records')[0]
+        features_dict = features_df.to_dict('records')[0]
+        # Add original filename to features
+        features_dict['original_filename'] = original_filename
+        session['features'] = features_dict
         
         # Convert features to readable format for display
         features_display = {}
@@ -108,7 +115,7 @@ def results():
         return render_template('results.html', 
                              spectrograms=spectrogram_paths,
                              features=features_display,
-                             filename=filename)
+                             filename=original_filename)  # Show original filename
     
     except Exception as e:
         app.logger.error(f"Analysis error: {str(e)}")
@@ -143,6 +150,10 @@ def download_features(format):
         return redirect(url_for('index'))
     
     features = session['features']
+    original_filename = session.get('original_filename', 'motor_features')
+    
+    # Create base name for download
+    base_name = original_filename.rsplit('.', 1)[0] if '.' in original_filename else original_filename
     
     if format == 'csv':
         # Create CSV
@@ -154,7 +165,7 @@ def download_features(format):
         return send_file(output, 
                         mimetype='text/csv',
                         as_attachment=True,
-                        download_name='motor_features.csv')
+                        download_name=f'{base_name}_features.csv')
     
     elif format == 'json':
         # Create JSON
@@ -166,7 +177,7 @@ def download_features(format):
         return send_file(output,
                         mimetype='application/json',
                         as_attachment=True,
-                        download_name='motor_features.json')
+                        download_name=f'{base_name}_features.json')
     
     return redirect(url_for('results'))
 
